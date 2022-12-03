@@ -19,12 +19,14 @@ jobs:
           paths_ignore: '["README.md", "docs/**", "tools/**", "data/**"]'
 
   build:
-    name: Clang tidy analysis
+    name: Clang Tidy Analysis
     needs: skip-duplicates
     # Skip tasks
     if: ${{ needs.skip-duplicates.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
-
+    env:
+      SUPER_SECRET: ${{ secrets.TEST_SCRET }}
+      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
     steps:
     - uses: actions/checkout@v2
       with:
@@ -47,11 +49,6 @@ jobs:
         chmod +x setup_env.sh
         ./setup_env.sh
 
-    - name: Download Clang Analysis Driver Scripts
-      run: |
-        wget https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-11.0.1/clang-tools-extra/clang-tidy/tool/run-clang-tidy.py
-        chmod +x run-clang-tidy.py
-
     - name: Build Glad
       run: |
         cd build
@@ -60,4 +57,14 @@ jobs:
     # Implicitly requires build/compile_commands.json to exist
     - name: Run Clang Analyzer
       run: |
-        ./run-clang-tidy.py -j $(nproc) -quiet -p build
+        chmod +x ./tools/run-clang-tidy.py
+        ./tools/run-clang-tidy.py -j $(nproc) -quiet -p build > clang.txt
+
+    - name: Run Codacy Analysis CLI
+      uses: codacy/codacy-analysis-cli-action@master
+      with:
+        tool: clang-tidy
+        api-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        clang-tidy-output: "clang.txt"
+        upload: true
+        max-allowed-issues: 2147483647
