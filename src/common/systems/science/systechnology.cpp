@@ -23,24 +23,27 @@
 #include "common/components/science.h"
 #include "common/systems/science/technology.h"
 
-void cqsp::common::systems::SysTechProgress::DoSystem() {
-    ZoneScoped;
-    auto field = GetUniverse().view<components::science::ScientificResearch>();
+using cqsp::common::components::science::Technology;
+using cqsp::common::components::science::ScientificResearch;
+using cqsp::common::systems::SysTechProgress;
+using entt::entity;
 
-    for (entt::entity entity : field) {
-        auto& research = GetUniverse().get<components::science::ScientificResearch>(entity);
-        std::vector<entt::entity> completed_techs;
+void SysTechProgress::DoSystem() {
+    ZoneScoped;
+    for (entity presearch : GetUniverse().view<ScientificResearch>()) {
+        auto& research = GetUniverse().get<ScientificResearch>(presearch);
+        std::vector<entity> completed_techs;
         for (auto& res : research.current_research) {
             res.second += Interval();
             // Get the research amount
-            auto& tech = GetUniverse().get<components::science::Technology>(res.first);
+            auto& tech = GetUniverse().get<Technology>(res.first);
             if (res.second > tech.difficulty) {
                 // Add the researched
                 completed_techs.push_back(res.first);
             }
         }
-        for (entt::entity r : completed_techs) {
-            cqsp::common::systems::science::ResearchTech(GetUniverse(), entity, r);
+        for (entity r : completed_techs) {
+            science::ResearchTech(GetUniverse(), presearch, r);
             research.current_research.erase(r);
         }
     }

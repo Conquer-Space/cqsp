@@ -28,7 +28,7 @@
 #include <pwd.h>
 #include <sys/types.h>
 #include <unistd.h>
-namespace {
+namespace cqsp::common::util {
 char* get_home_dir(uid_t uid) {
     struct passwd pwent;
     struct passwd* pwentp;
@@ -40,9 +40,9 @@ char* get_home_dir(uid_t uid) {
         return pwent.pw_dir;
     }
 }
-}  // namespace
+} // namespace cqsp::common::util
 #endif
-
+//Split due to ifdefs
 namespace cqsp::common::util {
 std::string ExePath::exe_path = std::string();  // NOLINT
 

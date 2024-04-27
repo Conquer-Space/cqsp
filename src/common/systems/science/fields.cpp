@@ -26,14 +26,20 @@
 #include "common/components/science.h"
 #include "common/systems/loading/loadutil.h"
 
-namespace {
+namespace components = cqsp::common::components;
+namespace science = components::science;
+using science::Field;
+using components::Name;
+using components::Identifier;
+using components::Description;
+using entt::entity;
+
+namespace cqsp::common::systems::science {
 struct FieldTemplate {
     std::vector<std::string> parent;
     std::vector<std::string> adjacent;
 };
-}  // namespace
 
-namespace cqsp::common::systems::science {
 void LoadFields(Universe& universe, Hjson::Value& hjson) {
     for (int i = 0; i < hjson.size(); i++) {
         Hjson::Value val = hjson[i];
@@ -41,8 +47,8 @@ void LoadFields(Universe& universe, Hjson::Value& hjson) {
             continue;
         }
         // Get the name
-        entt::entity field = universe.create();
-        auto& field_comp = universe.emplace<components::science::Field>(field);
+        entity field = universe.create();
+        Field& field_comp = universe.emplace<Field>(field);
         loading::LoadName(universe, field, val);
         if (!loading::LoadIdentifier(universe, field, val)) {
             universe.destroy(field);
@@ -85,10 +91,9 @@ void LoadFields(Universe& universe, Hjson::Value& hjson) {
         universe.fields[identifier] = field;
     }
 
-    auto view = universe.view<FieldTemplate>();
-    for (entt::entity entity : view) {
+    for (entity entity : universe.view<FieldTemplate>()) {
         auto& field_template = universe.get<FieldTemplate>(entity);
-        auto& field = universe.get<components::science::Field>(entity);
+        Field& field = universe.get<Field>(entity);
         for (const auto& parent_name : field_template.parent) {
             // If it does not contain, warn
             if (universe.fields.find(parent_name) == universe.fields.end()) {
@@ -109,22 +114,21 @@ void LoadFields(Universe& universe, Hjson::Value& hjson) {
 }
 
 Hjson::Value WriteFields(Universe& universe) {
-    auto view = universe.view<components::science::Field>();
     Hjson::Value all_fields;
-    for (entt::entity entity : view) {
+    for (entity entity : universe.view<Field>()) {
         Hjson::Value field_hjson;
-        field_hjson["name"] = universe.get<components::Name>(entity).name;
-        field_hjson["identifier"] = universe.get<components::Identifier>(entity).identifier;
-        if (universe.any_of<components::Description>(entity)) {
-            field_hjson["description"] = universe.get<components::Description>(entity).description;
+        field_hjson["name"] = universe.get<Name>(entity).name;
+        field_hjson["identifier"] = universe.get<Identifier>(entity).identifier;
+        if (universe.any_of<Description>(entity)) {
+            field_hjson["description"] = universe.get<Description>(entity).description;
         }
 
-        auto& field = universe.get<components::science::Field>(entity);
+        Field& field = universe.get<Field>(entity);
         if (!field.adjacent.empty()) {
             // Add all the entities
             Hjson::Value adj_list;
             for (entt::entity adj : field.adjacent) {
-                auto& identifier = universe.get<components::Identifier>(adj);
+                auto& identifier = universe.get<Identifier>(adj);
                 adj_list.push_back(identifier.identifier);
             }
             field_hjson["adjacent"] = adj_list;
@@ -133,7 +137,7 @@ Hjson::Value WriteFields(Universe& universe) {
             // Add all the entities
             Hjson::Value adj_list;
             for (entt::entity adj : field.parents) {
-                auto& identifier = universe.get<components::Identifier>(adj);
+                auto& identifier = universe.get<Identifier>(adj);
                 adj_list.push_back(identifier.identifier);
             }
             field_hjson["parent"] = adj_list;

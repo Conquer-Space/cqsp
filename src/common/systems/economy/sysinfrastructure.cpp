@@ -21,39 +21,49 @@
 #include "common/components/area.h"
 #include "common/components/infrastructure.h"
 
-void cqsp::common::systems::InfrastructureSim::DoSystem() {
+using cqsp::common::systems::InfrastructureSim;
+namespace components = cqsp::common::components;
+namespace infrastructure = components::infrastructure;
+using components::IndustrialZone;
+using infrastructure::PowerPlant;
+using infrastructure::Highway;
+using infrastructure::PowerConsumption;
+using infrastructure::CityPower;
+using infrastructure::BrownOut;
+using infrastructure::CityInfrastructure;
+using entt::entity;
+
+void InfrastructureSim::DoSystem() {
     ZoneScoped;
-    namespace cqspc = cqsp::common::components;
     Universe& universe = GetUniverse();
     // Get all cities with industry and infrastruture
-    auto view = universe.view<cqspc::IndustrialZone>();
-    for (entt::entity entity : view) {
-        auto& industry = universe.get<cqspc::IndustrialZone>(entity);
+    for (entity zone : universe.view<IndustrialZone>()) {
+        auto& industry = universe.get<IndustrialZone>(zone);
         double power_production = 0;
         double power_consumption = 0;
-        for (entt::entity industrial_site : industry.industries) {
-            if (universe.any_of<cqspc::infrastructure::PowerPlant>(industrial_site)) {
-                power_production += universe.get<cqspc::infrastructure::PowerPlant>(industrial_site).production;
+        for (entity industrial_site : industry.industries) {
+            if (universe.any_of<PowerPlant>(industrial_site)) {
+                power_production += universe.get<PowerPlant>(industrial_site).production;
             }
-            if (universe.any_of<cqspc::infrastructure::PowerConsumption>(industrial_site)) {
-                power_consumption += universe.get<cqspc::infrastructure::PowerConsumption>(industrial_site).max;
+            if (universe.any_of<PowerConsumption>(industrial_site)) {
+                power_consumption += universe.get<PowerConsumption>(industrial_site).max;
             }
         }
         // Now assign infrastrutural information
-        universe.emplace_or_replace<cqspc::infrastructure::CityPower>(entity, power_production, power_consumption);
+        universe.emplace_or_replace<CityPower>(zone, power_production, power_consumption);
 
         if (power_production < power_consumption) {
             // Then city has no power. Next time, we'd allow transmitting power, or allowing emergency use power
             // but for now, the city will go under brownout.
-            universe.get_or_emplace<cqspc::infrastructure::BrownOut>(entity);
+            universe.get_or_emplace<BrownOut>(zone);
         } else {
-            universe.remove<cqspc::infrastructure::BrownOut>(entity);
+            universe.remove<BrownOut>(zone);
         }
-        auto& infra = GetUniverse().get<cqspc::infrastructure::CityInfrastructure>(entity);
+        CityInfrastructure& infra = GetUniverse().get_or_emplace<CityInfrastructure>(zone);
         infra.improvement = 0;
         // Add highway things I guess
-        if (GetUniverse().any_of<cqspc::infrastructure::Highway>(entity)) {
-            infra.improvement += GetUniverse().get<cqspc::infrastructure::Highway>(entity).extent;
+        if (GetUniverse().any_of<Highway>(zone)) {
+            infra.improvement += GetUniverse().get<Highway>(zone).extent;
         }
     }
 }

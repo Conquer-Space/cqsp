@@ -24,7 +24,7 @@
 namespace cqsp::client {
 class CreditsWindow : public Rml::EventListener {
  public:
-    explicit CreditsWindow(cqsp::engine::Application& app);
+    explicit CreditsWindow(engine::Application& app);
     ~CreditsWindow();
     void OpenDocument();
     void Show();
@@ -37,9 +37,9 @@ class CreditsWindow : public Rml::EventListener {
     void LoadCreditsText();
     void SetCreditsScroll();
 
-    Rml::ElementDocument* document;
+    Rml::ElementDocument* document = NULL;
     Rml::Element* credits_text_element;
-    cqsp::engine::Application& m_app;
+    engine::Application& m_app;
 
     std::string credits_text;
     float scroll_percentage = 0.0f;

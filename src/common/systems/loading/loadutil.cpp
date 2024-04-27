@@ -20,8 +20,12 @@
 
 #include "common/components/name.h"
 
+using cqsp::common::components::types::UnitType;
+namespace types = cqsp::common::components::types;
+using entt::entity;
+
 namespace cqsp::common::systems::loading {
-bool LoadName(Universe& universe, const entt::entity& entity, const Hjson::Value& value) {
+bool LoadName(Universe& universe, const entity& entity, const Hjson::Value& value) {
     if (value["name"].type() != Hjson::Type::String) {
         return false;
     }
@@ -31,7 +35,7 @@ bool LoadName(Universe& universe, const entt::entity& entity, const Hjson::Value
     return true;
 }
 
-bool LoadIdentifier(Universe& universe, const entt::entity& entity, const Hjson::Value& value) {
+bool LoadIdentifier(Universe& universe, const entity& entity, const Hjson::Value& value) {
     if (value["identifier"].type() != Hjson::Type::String) {
         return false;
     }
@@ -41,7 +45,7 @@ bool LoadIdentifier(Universe& universe, const entt::entity& entity, const Hjson:
     return true;
 }
 
-bool LoadDescription(Universe& universe, const entt::entity& entity, const Hjson::Value& value) {
+bool LoadDescription(Universe& universe, const entity& entity, const Hjson::Value& value) {
     if (value["description"].type() != Hjson::Type::String) {
         return false;
     }
@@ -51,13 +55,13 @@ bool LoadDescription(Universe& universe, const entt::entity& entity, const Hjson
     return true;
 }
 
-bool LoadInitialValues(Universe& universe, const entt::entity& entity, const Hjson::Value& value) {
+bool LoadInitialValues(Universe& universe, const entity& entity, const Hjson::Value& value) {
     LoadName(universe, entity, value);
     LoadDescription(universe, entity, value);
     return LoadIdentifier(universe, entity, value);
 }
 
-cqsp::common::components::ResourceLedger HjsonToLedger(cqsp::common::Universe& universe, Hjson::Value& hjson) {
+    components::ResourceLedger HjsonToLedger(Universe& universe, Hjson::Value& hjson) {
     components::ResourceLedger stockpile;
     for (auto& input_good : hjson) {
         stockpile[universe.goods[input_good.first]] = input_good.second;
@@ -89,9 +93,7 @@ bool is_number(std::string_view s) {
 }
 }  // namespace
 
-double ReadUnit(std::string_view value, components::types::UnitType unit_type, bool* correct) {
-    using common::components::types::UnitType;
-    namespace cqspt = common::components::types;
+double ReadUnit(std::string_view value, UnitType unit_type, bool* correct) {
     // Find the letters
     if (correct != nullptr) {
         (*correct) = true;
@@ -148,7 +150,7 @@ double ReadUnit(std::string_view value, components::types::UnitType unit_type, b
             if (unit_string == "km" || unit_string.empty()) {
                 // remain as it is
             } else if (unit_string == "AU" || unit_string == "au") {
-                read_value = cqspt::toKm(read_value);
+                read_value = types::toKm(read_value);
             } else if (unit_string == "m") {
                 read_value /= 1000.f;
             } else {
@@ -160,7 +162,7 @@ double ReadUnit(std::string_view value, components::types::UnitType unit_type, b
             if (unit_string == "rad") {
                 // Remain as it is
             } else if (unit_string.empty() || unit_string == "deg") {
-                read_value = cqspt::toRadian(read_value);
+                read_value = types::toRadian(read_value);
             } else {
                 // then it's invalid
                 mark_wrong();

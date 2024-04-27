@@ -22,6 +22,11 @@
 #include "common/components/science.h"
 #include "common/systems/loading/loadutil.h"
 
+namespace science = cqsp::common::components::science;
+using science::Technology;
+using science::TechnologicalProgress;
+using entt::entity;
+
 namespace cqsp::common::systems::science {
 void LoadTechnologies(Universe& universe, Hjson::Value& value) {
     // Load the technologies
@@ -33,12 +38,12 @@ void LoadTechnologies(Universe& universe, Hjson::Value& value) {
     for (int i = 0; i < value.size(); i++) {
         Hjson::Value element = Hjson::Merge(base, value[i]);
 
-        entt::entity entity = universe.create();
-        if (!loading::LoadInitialValues(universe, entity, element)) {
+        entity techentity = universe.create();
+        if (!loading::LoadInitialValues(universe, techentity, element)) {
             // Then kill the loading because you need an identifier
         }
 
-        auto& tech = universe.emplace<components::science::Technology>(entity);
+        auto& tech = universe.emplace<Technology>(techentity);
         // Add tech data
         Hjson::Value val = element["actions"];
         for (int i = 0; i < val.size(); i++) {
@@ -47,33 +52,32 @@ void LoadTechnologies(Universe& universe, Hjson::Value& value) {
 
         Hjson::Value fieldlist = element["fields"];
         for (int i = 0; i < fieldlist.size(); i++) {
-            entt::entity field_entity = universe.fields[fieldlist[i].to_string()];
+            entity field_entity = universe.fields[fieldlist[i].to_string()];
             tech.fields.insert(field_entity);
         }
 
         // Verify if the tags exist
         tech.difficulty = element["difficulty"];
 
-        universe.technologies[universe.get<components::Identifier>(entity)] = entity;
+        universe.technologies[universe.get<components::Identifier>(techentity)] = techentity;
     }
 }
 
 void ResearchTech(Universe& universe, entt::entity civilization, entt::entity tech) {
     // Ensure it's a tech or something
-    auto& tech_progress = universe.get_or_emplace<components::science::TechnologicalProgress>(civilization);
+    auto& tech_progress = universe.get_or_emplace<TechnologicalProgress>(civilization);
     tech_progress.researched_techs.emplace(tech);
 
     // Research technology somehow
-    auto& tech_comp = universe.get<components::science::Technology>(tech);
-    for (const std::string& act : tech_comp.actions) {
+    for (const std::string& act : universe.get<Technology>(tech).actions) {
         ProcessAction(universe, civilization, act);
     }
 }
 
-void ProcessAction(Universe& universe, entt::entity civilization, const std::string& action) {
+void ProcessAction(Universe& universe, entity civilization, const std::string& action) {
     // Process the tech
     // Split by the colon
-    auto& tech_progress = universe.get_or_emplace<components::science::TechnologicalProgress>(civilization);
+    auto& tech_progress = universe.get_or_emplace<TechnologicalProgress>(civilization);
 
     std::string action_name = action.substr(0, action.find(':'));
     std::string outcome_name = action.substr(action.find(':') + 1, action.size());

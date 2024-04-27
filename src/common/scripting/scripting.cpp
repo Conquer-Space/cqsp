@@ -24,12 +24,12 @@
 
 #include "common/util/logging.h"
 
-using cqsp::scripting::ScriptInterface;
+using cqsp::common::scripting::ScriptInterface;
 
 ScriptInterface::ScriptInterface() {
     open_libraries(sol::lib::base, sol::lib::table, sol::lib::math, sol::lib::package);
     // Initialize loggers
-    logger = cqsp::common::util::make_logger("lua");
+    logger = util::make_logger("lua");
     // Add a sink to get the scripting log
     ringbuffer_sink = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(128);
     ringbuffer_sink->set_pattern("%v");
@@ -74,4 +74,4 @@ void ScriptInterface::Init() {
 
 int ScriptInterface::GetLength(std::string_view a) { return static_cast<int>((*this)[a]["len"]); }
 
-std::vector<std::string> cqsp::scripting::ScriptInterface::GetLogs() { return ringbuffer_sink->last_formatted(); }
+std::vector<std::string> ScriptInterface::GetLogs() { return ringbuffer_sink->last_formatted(); }

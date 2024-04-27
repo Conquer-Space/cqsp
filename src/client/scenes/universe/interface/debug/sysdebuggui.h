@@ -22,16 +22,14 @@
 #include <string>
 #include <utility>
 #include <vector>
-
 #include "client/systems/sysgui.h"
 
 #define sysdebuggui_parameters                                                                                \
-    cqsp::engine::Application &app, common::Universe &universe, scripting::ScriptInterface &script_interface, \
-        const std::string_view &args, CommandOutput &input
+cqsp::engine::Application &app, common::Universe &universe,                                                   \
+common::scripting::ScriptInterface &script_interface, const std::string_view &args,                           \
+    CommandOutput &input
 
-namespace cqsp {
-namespace client {
-namespace systems {
+namespace cqsp::client::systems {
 class SysDebugMenu : public SysUserInterface {
  public:
     explicit SysDebugMenu(cqsp::engine::Application &app);
@@ -69,6 +67,4 @@ class SysDebugMenu : public SysUserInterface {
 
     std::map<std::string, std::vector<ImVec2>> history_maps;
 };
-}  // namespace systems
-}  // namespace client
-}  // namespace cqsp
+}  // namespace cqsp::client::systems

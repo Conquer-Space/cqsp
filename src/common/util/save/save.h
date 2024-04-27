@@ -22,7 +22,7 @@
 
 #include "common/universe.h"
 
-namespace cqsp::common::save {
+namespace cqsp::common::game {
 class Save {
  public:
     // Get the savegame?
@@ -43,4 +43,4 @@ class Load {
 };
 
 std::string GetMetaPath(std::string_view folder);
-}  // namespace cqsp::common::save
+} // namespace cqsp::common::game

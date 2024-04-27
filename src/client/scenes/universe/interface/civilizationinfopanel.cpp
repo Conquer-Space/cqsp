@@ -30,10 +30,14 @@
 #include "common/util/utilnumberdisplay.h"
 
 using cqsp::common::util::GetName;
+using cqsp::common::util::LongToHumanString;
+using cqsp::client::systems::CivilizationInfoPanel;
+namespace components = cqsp::common::components;
+using entt::entity;
 
-void cqsp::client::systems::CivilizationInfoPanel::Init() {}
+void CivilizationInfoPanel::Init() {}
 
-void cqsp::client::systems::CivilizationInfoPanel::DoUI(int delta_time) {
+void CivilizationInfoPanel::DoUI(int delta_time) {
     // Get the ui
     ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
     if (to_display) {
@@ -52,11 +56,11 @@ void cqsp::client::systems::CivilizationInfoPanel::DoUI(int delta_time) {
     ImGui::End();
 }
 
-void cqsp::client::systems::CivilizationInfoPanel::DoUpdate(int delta_time) {}
+void CivilizationInfoPanel::DoUpdate(int delta_time) {}
 
-void cqsp::client::systems::CivilizationInfoPanel::CivInfoPanel() {
+void CivilizationInfoPanel::CivInfoPanel() {
     // Get player
-    entt::entity player = GetUniverse().view<common::components::Player>().front();
+    entity player = GetUniverse().view<components::Player>().front();
     if (player == entt::null) {
         return;
     }
@@ -66,28 +70,27 @@ void cqsp::client::systems::CivilizationInfoPanel::CivInfoPanel() {
     gui::EntityTooltip(GetUniverse(), player);
 
     // If it has a capital city
-    if (GetUniverse().any_of<common::components::Country>(player)) {
-        entt::entity capital = GetUniverse().get<common::components::Country>(player).capital_city;
+    if (GetUniverse().any_of<components::Country>(player)) {
+        entity capital = GetUniverse().get<components::Country>(player).capital_city;
         if (capital != entt::null) {
             ImGui::TextFmt("Capital City: {}", GetName(GetUniverse(), capital));
         }
     }
 
-    if (GetUniverse().any_of<common::components::Wallet>(player)) {
-        auto& wallet = GetUniverse().get<common::components::Wallet>(player);
-        ImGui::TextFmt("Reserves: {}", util::LongToHumanString(wallet.GetBalance()));
+    if (GetUniverse().any_of<components::Wallet>(player)) {
+        auto& wallet = GetUniverse().get<components::Wallet>(player);
+        ImGui::TextFmt("Reserves: {}", LongToHumanString(wallet.GetBalance()));
     }
 
     if (ImGui::BeginTabBar("civ_info_window")) {
         if (ImGui::BeginTabItem("City Information")) {
             // Collate all the owned stuff
-            auto view = GetUniverse().view<common::components::Governed>();
             ImGui::Separator();
             ImGui::Text("Owned Cities");
 
             ImGui::BeginChild("ownedcitiespanel");
-            for (auto entity : view) {
-                if (GetUniverse().get<common::components::Governed>(entity).governor == player) {
+            for (auto entity : GetUniverse().view<components::Governed>()) {
+                if (GetUniverse().get<components::Governed>(entity).governor == player) {
                     ImGui::TextFmt("{}", GetName(GetUniverse(), entity));
                     gui::EntityTooltip(GetUniverse(), entity);
                 }
@@ -96,9 +99,9 @@ void cqsp::client::systems::CivilizationInfoPanel::CivInfoPanel() {
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Province Information")) {
-            if (GetUniverse().any_of<common::components::CountryCityList>(player)) {
-                for (entt::entity entity :
-                     GetUniverse().get<common::components::CountryCityList>(player).province_list) {
+            if (GetUniverse().any_of<components::CountryCityList>(player)) {
+                for (entity entity :
+                     GetUniverse().get<components::CountryCityList>(player).province_list) {
                     bool selected = GetUniverse().view<ctx::SelectedProvince>().front() == entity;
                     if (ImGui::SelectableFmt("{}", &selected, GetName(GetUniverse(), entity))) {
                         entt::entity ent = GetUniverse().view<ctx::SelectedProvince>().front();
@@ -129,12 +132,12 @@ void cqsp::client::systems::CivilizationInfoPanel::CivInfoPanel() {
     }
 }
 
-void cqsp::client::systems::CivilizationInfoPanel::BudgetInfoPanel() {
-    entt::entity player = GetUniverse().view<common::components::Player>().front();
+void CivilizationInfoPanel::BudgetInfoPanel() {
+    entity player = GetUniverse().view<components::Player>().front();
 
-    if (GetUniverse().any_of<common::components::Wallet>(player)) {
-        auto& wallet = GetUniverse().get<common::components::Wallet>(player);
-        ImGui::TextFmt("Reserves: {}", util::LongToHumanString(wallet.GetBalance()));
+    if (GetUniverse().any_of<components::Wallet>(player)) {
+        auto& wallet = GetUniverse().get<components::Wallet>(player);
+        ImGui::TextFmt("Reserves: {}", LongToHumanString(wallet.GetBalance()));
     } else {
         ImGui::TextFmt("No Wallet!");
     }
@@ -142,17 +145,16 @@ void cqsp::client::systems::CivilizationInfoPanel::BudgetInfoPanel() {
     // Then show the liabilities where they bankroll things
 }
 
-void cqsp::client::systems::CivilizationInfoPanel::PlanetMarketInfoPanel() {
+void CivilizationInfoPanel::PlanetMarketInfoPanel() {
     if (!ImGui::BeginTabBar("market_info_panel")) {
         return;
     }
-    auto view = GetUniverse().view<common::components::Market, common::components::PlanetaryMarket>();
-    for (entt::entity entity : view) {
+    for (entity entity : GetUniverse().view<components::Market, components::PlanetaryMarket>()) {
         if (!ImGui::BeginTabItem(fmt::format("{}", GetName(GetUniverse(), entity)).c_str())) {
             continue;
         }
         ImGui::TextFmt("{}", GetName(GetUniverse(), entity));
-        auto& market = GetUniverse().get<common::components::Market>(entity);
+        auto& market = GetUniverse().get<components::Market>(entity);
         client::systems::MarketInformationTable(GetUniverse(), entity);
         ImGui::EndTabItem();
     }
